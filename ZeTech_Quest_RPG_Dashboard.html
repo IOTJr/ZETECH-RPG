@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZeTech Quest — Student RPG Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Exo+2:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060818;
+  --surface: #0d1530;
+  --surface2: #131e3a;
+  --gold: #ffd700;
+  --gold2: #ffaa00;
+  --cyan: #00f5ff;
+  --purple: #9b59ff;
+  --green: #00ff88;
+  --red: #ff4757;
+  --orange: #ff6b35;
+  --pink: #ff6bff;
+  --text: #e8eaf6;
+  --muted: #5c6bc0;
+  --border: rgba(0,245,255,0.12);
+  --card: rgba(13,21,48,0.9);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* STAR FIELD */
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.star{position:absolute;border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s);}
+@keyframes twinkle{0%,100%{opacity:0.2;transform:scale(1);}50%{opacity:1;transform:scale(1.3);}}
+
+/* ============ LOGIN SCREEN ============ */
+#login-screen{
+  position:fixed;inset:0;z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at center, #0d1a3a 0%, #060818 100%);
+}
+.login-box{
+  width:min(460px,94vw);
+  background:linear-gradient(145deg,rgba(13,21,48,0.98),rgba(6,8,24,0.98));
+  border:2px solid var(--gold);
+  border-radius:20px;
+  padding:40px 36px;
+  box-shadow:0 0 60px rgba(255,215,0,0.15),inset 0 1px 0 rgba(255,255,255,0.05);
+  text-align:center;
+  animation:loginPop 0.5s ease both;
+}
+@keyframes loginPop{from{opacity:0;transform:translateY(30px) scale(0.95);}to{opacity:1;transform:none;}}
+.login-logo{font-family:'Press Start 2P',monospace;font-size:13px;color:var(--gold);margin-bottom:6px;text-shadow:0 0 20px var(--gold);}
+.login-subtitle{font-size:12px;color:var(--muted);margin-bottom:32px;letter-spacing:2px;}
+.login-char{font-size:64px;margin-bottom:16px;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.login-tabs{display:flex;gap:0;margin-bottom:28px;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.login-tab{flex:1;padding:10px;font-family:'Exo 2',sans-serif;font-size:13px;font-weight:700;background:transparent;border:none;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+.login-tab.active{background:var(--gold);color:#000;}
+.form-group{margin-bottom:16px;text-align:left;}
+.form-group label{display:block;font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.form-group input, .form-group select{
+  width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:8px;padding:12px 14px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:14px;
+  transition:border-color 0.2s;outline:none;
+}
+.form-group input:focus,.form-group select:focus{border-color:var(--gold);}
+.form-group select option{background:#0d1530;}
+.btn-primary{
+  width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#000;font-family:'Press Start 2P',monospace;font-size:10px;border:none;border-radius:10px;
+  cursor:pointer;transition:all 0.2s;letter-spacing:1px;margin-top:8px;
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(255,215,0,0.35);}
+.login-error{color:var(--red);font-size:12px;margin-top:10px;display:none;}
+.class-avatars{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
+.avatar-opt{
+  background:var(--surface2);border:2px solid var(--border);border-radius:10px;
+  padding:12px 6px;text-align:center;cursor:pointer;transition:all 0.2s;
+}
+.avatar-opt:hover,.avatar-opt.selected{border-color:var(--gold);background:rgba(255,215,0,0.08);}
+.avatar-opt .emoji{font-size:28px;display:block;margin-bottom:4px;}
+.avatar-opt .aname{font-size:10px;color:var(--muted);}
+
+/* ============ MAIN APP ============ */
+#app{display:none;min-height:100vh;}
+
+/* TOP BAR */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;gap:16px;padding:12px 24px;
+  background:rgba(6,8,24,0.92);border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px);flex-wrap:wrap;
+}
+.topbar-logo{font-family:'Press Start 2P',monospace;font-size:9px;color:var(--gold);white-space:nowrap;}
+.topbar-char{font-size:28px;}
+.topbar-info{flex:1;min-width:200px;}
+.topbar-name{font-size:14px;font-weight:700;color:#fff;}
+.topbar-level{font-size:11px;color:var(--gold);font-family:'Press Start 2P',monospace;}
+.xp-bar-wrap{height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:4px;overflow:hidden;}
+.xp-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--orange));border-radius:3px;transition:width 0.6s ease;}
+.topbar-stats{display:flex;gap:20px;align-items:center;}
+.stat-pill{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;}
+.stat-pill .icon{font-size:16px;}
+.notif-btn{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:8px 14px;color:var(--text);cursor:pointer;font-size:13px;font-family:'Exo 2',sans-serif;
+  transition:all 0.2s;position:relative;
+}
+.notif-btn:hover{border-color:var(--cyan);}
+.notif-badge{position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:var(--red);border-radius:50%;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.logout-btn{background:transparent;border:1px solid rgba(255,71,87,0.4);color:var(--red);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:'Exo 2',sans-serif;transition:all 0.2s;}
+.logout-btn:hover{background:rgba(255,71,87,0.1);}
+
+/* NAV TABS */
+.nav-tabs{display:flex;gap:4px;padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.nav-tab{
+  background:transparent;border:1px solid var(--border);color:var(--muted);
+  padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'Exo 2',sans-serif;
+  font-size:12px;font-weight:600;letter-spacing:1px;transition:all 0.2s;
+}
+.nav-tab:hover{color:var(--cyan);border-color:var(--cyan);}
+.nav-tab.active{background:var(--cyan);color:#000;border-color:var(--cyan);}
+
+.page{display:none;padding:24px;position:relative;z-index:1;}
+.page.active{display:block;}
+
+/* ============ DASHBOARD ============ */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;}
+@media(max-width:900px){.dash-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.dash-grid{grid-template-columns:1fr;}}
+
+.hero-card{
+  grid-column:1/-1;
+  background:linear-gradient(135deg,var(--surface2),#0a1428);
+  border:1px solid var(--gold);border-radius:16px;padding:28px;
+  display:flex;align-items:center;gap:28px;flex-wrap:wrap;
+  box-shadow:0 0 40px rgba(255,215,0,0.08);
+}
+.hero-avatar-big{font-size:72px;animation:float 3s ease-in-out infinite;flex-shrink:0;}
+.hero-details{flex:1;min-width:200px;}
+.hero-name{font-size:24px;font-weight:900;color:#fff;margin-bottom:4px;}
+.hero-class{font-size:13px;color:var(--gold);font-family:'Press Start 2P',monospace;margin-bottom:12px;}
+.hero-attrs{display:flex;gap:16px;flex-wrap:wrap;}
+.attr{text-align:center;background:rgba(255,255,255,0.04);padding:8px 14px;border-radius:8px;border:1px solid var(--border);}
+.attr-val{font-size:20px;font-weight:900;color:var(--cyan);}
+.attr-name{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.hero-xp-section{min-width:200px;}
+.xp-label{font-size:11px;color:var(--muted);margin-bottom:6px;font-family:'Press Start 2P',monospace;}
+.big-xp-bar{height:16px;background:rgba(255,255,255,0.07);border-radius:8px;overflow:hidden;margin-bottom:6px;border:1px solid var(--border);}
+.big-xp-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--orange),var(--red));border-radius:8px;transition:width 0.8s ease;}
+.xp-nums{font-size:12px;color:var(--gold);text-align:right;}
+
+.stat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:20px;transition:transform 0.2s,border-color 0.2s;
+}
+.stat-card:hover{transform:translateY(-3px);border-color:var(--cyan);}
+.stat-card-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;}
+.stat-card-val{font-size:32px;font-weight:900;margin-bottom:4px;}
+.stat-card-sub{font-size:12px;color:var(--muted);}
+
+/* COURSES GRID */
+.courses-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+.course-card{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  overflow:hidden;transition:transform 0.2s,border-color 0.2s;cursor:pointer;
+}
+.course-card:hover{transform:translateY(-4px);}
+.course-banner{height:8px;}
+.course-body{padding:20px;}
+.course-icon{font-size:36px;margin-bottom:10px;}
+.course-code{font-family:'Press Start 2P',monospace;font-size:9px;color:var(--muted);margin-bottom:4px;}
+.course-name{font-size:16px;font-weight:700;color:#fff;margin-bottom:12px;}
+.course-progress-wrap{height:8px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;margin-bottom:8px;}
+.course-progress-fill{height:100%;border-radius:4px;transition:width 0.6s ease;}
+.course-progress-label{font-size:12px;color:var(--muted);}
+.quest-count{font-size:12px;margin-top:8px;}
+
+/* ============ QUEST MAP ============ */
+.quest-course-select{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.qcs-btn{
+  background:var(--surface2);border:1px solid var(--border);color:var(--muted);
+  padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;
+  font-family:'Exo 2',sans-serif;transition:all 0.2s;
+}
+.qcs-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(255,215,0,0.08);}
+
+.quest-map{display:flex;flex-direction:column;gap:12px;}
+.quest-node{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:18px 20px;display:flex;align-items:center;gap:16px;
+  transition:all 0.2s;cursor:pointer;position:relative;
+}
+.quest-node:hover{border-color:var(--cyan);transform:translateX(4px);}
+.quest-node.locked{opacity:0.45;cursor:not-allowed;}
+.quest-node.locked:hover{transform:none;border-color:var(--border);}
+.quest-node.completed{border-color:var(--green);background:rgba(0,255,136,0.04);}
+.quest-node.boss{border-color:var(--red);background:rgba(255,71,87,0.05);}
+.quest-node.boss:hover{border-color:var(--red);}
+.quest-node.active-quest{border-color:var(--gold);background:rgba(255,215,0,0.05);animation:questGlow 2s ease-in-out infinite;}
+@keyframes questGlow{0%,100%{box-shadow:0 0 10px rgba(255,215,0,0.1);}50%{box-shadow:0 0 25px rgba(255,215,0,0.3);}}
+.quest-num{
+  width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Press Start 2P',monospace;font-size:11px;font-weight:700;flex-shrink:0;
+  border:2px solid;
+}
+.quest-num.done{background:var(--green);border-color:var(--green);color:#000;}
+.quest-num.boss-n{background:var(--red);border-color:var(--red);color:#fff;animation:bossFlicker 1.5s ease-in-out infinite;}
+@keyframes bossFlicker{0%,100%{box-shadow:0 0 8px var(--red);}50%{box-shadow:0 0 20px var(--red),0 0 40px rgba(255,71,87,0.3);}}
+.quest-num.active-n{background:var(--gold);border-color:var(--gold);color:#000;}
+.quest-num.lock-n{background:var(--surface2);border-color:var(--muted);color:var(--muted);}
+.quest-info{flex:1;}
+.quest-week{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;}
+.quest-title{font-size:15px;font-weight:700;color:#fff;margin:2px 0;}
+.quest-type-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;margin-top:4px;}
+.tag-boss{background:rgba(255,71,87,0.2);color:var(--red);border:1px solid var(--red);}
+.tag-quest{background:rgba(0,245,255,0.1);color:var(--cyan);border:1px solid rgba(0,245,255,0.3);}
+.tag-done{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid var(--green);}
+.tag-lock{background:rgba(92,107,192,0.2);color:var(--muted);border:1px solid var(--muted);}
+.quest-xp{font-size:12px;color:var(--gold);font-weight:700;flex-shrink:0;}
+.quest-connector{height:20px;width:2px;background:var(--border);margin-left:41px;}
+.quest-connector.done{background:var(--green);}
+
+/* ============ BOSS FIGHT MODAL ============ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;
+  display:none;align-items:center;justify-content:center;padding:16px;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.open{display:flex;}
+.boss-modal{
+  width:min(680px,96vw);max-height:90vh;overflow-y:auto;
+  background:linear-gradient(145deg,#0d0f1e,#180820);
+  border:2px solid var(--red);border-radius:20px;padding:32px;
+  box-shadow:0 0 80px rgba(255,71,87,0.3);
+  animation:bossSlam 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both;
+}
+@keyframes bossSlam{from{opacity:0;transform:scale(0.7) rotate(-3deg);}to{opacity:1;transform:none;}}
+.boss-header{text-align:center;margin-bottom:24px;}
+.boss-emoji{font-size:80px;animation:bossBounce 0.8s ease-in-out infinite alternate;}
+@keyframes bossBounce{from{transform:translateY(0) scale(1);}to{transform:translateY(-12px) scale(1.05);};}
+.boss-title{font-family:'Press Start 2P',monospace;font-size:14px;color:var(--red);margin:12px 0 6px;text-shadow:0 0 20px var(--red);}
+.boss-subtitle{font-size:13px;color:var(--muted);}
+.boss-hp-bar{height:20px;background:rgba(255,255,255,0.06);border-radius:10px;overflow:hidden;margin:16px 0;border:1px solid rgba(255,71,87,0.3);}
+.boss-hp-fill{height:100%;background:linear-gradient(90deg,var(--red),#ff0055);border-radius:10px;transition:width 0.5s ease;}
+.boss-hp-label{text-align:center;font-size:12px;color:var(--red);margin-bottom:20px;font-family:'Press Start 2P',monospace;}
+.boss-questions{display:flex;flex-direction:column;gap:16px;}
+.bq{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.bq-text{font-size:14px;font-weight:600;color:#fff;margin-bottom:12px;}
+.bq-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+@media(max-width:500px){.bq-options{grid-template-columns:1fr;}}
+.bq-opt{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;cursor:pointer;font-size:13px;color:var(--text);
+  transition:all 0.2s;text-align:left;font-family:'Exo 2',sans-serif;
+}
+.bq-opt:hover:not(:disabled){border-color:var(--cyan);background:rgba(0,245,255,0.06);}
+.bq-opt.correct{background:rgba(0,255,136,0.15);border-color:var(--green);color:var(--green);}
+.bq-opt.wrong{background:rgba(255,71,87,0.15);border-color:var(--red);color:var(--red);}
+.bq-opt:disabled{cursor:not-allowed;}
+.boss-actions{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;}
+.boss-btn{
+  flex:1;min-width:120px;padding:14px;border:none;border-radius:10px;cursor:pointer;
+  font-family:'Press Start 2P',monospace;font-size:9px;transition:all 0.2s;
+}
+.boss-btn.attack{background:linear-gradient(135deg,var(--red),#cc0033);color:#fff;}
+.boss-btn.attack:hover{box-shadow:0 6px 20px rgba(255,71,87,0.4);}
+.boss-btn.flee{background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+.boss-result{text-align:center;padding:20px;display:none;}
+.boss-result .result-emoji{font-size:64px;margin-bottom:12px;}
+.boss-result .result-title{font-family:'Press Start 2P',monospace;font-size:14px;margin-bottom:8px;}
+.boss-result .result-sub{font-size:13px;color:var(--muted);}
+
+/* QUEST STUDY MODAL */
+.study-modal{
+  width:min(700px,96vw);max-height:90vh;overflow-y:auto;
+  background:linear-gradient(145deg,#0a1020,#0d1530);
+  border:2px solid var(--cyan);border-radius:20px;padding:32px;
+  box-shadow:0 0 60px rgba(0,245,255,0.15);
+  animation:studySlide 0.35s ease both;
+}
+@keyframes studySlide{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:none;}}
+.study-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;}
+.study-icon{font-size:48px;flex-shrink:0;}
+.study-meta{}
+.study-week-tag{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.study-title{font-size:20px;font-weight:800;color:#fff;margin-bottom:6px;}
+.study-xp-tag{font-size:11px;color:var(--gold);font-family:'Press Start 2P',monospace;}
+.study-section{margin-bottom:20px;}
+.study-section-title{font-size:11px;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(0,245,255,0.15);}
+.study-section p{font-size:13px;line-height:1.75;color:var(--text);margin-bottom:8px;}
+.study-bullets{list-style:none;display:flex;flex-direction:column;gap:6px;}
+.study-bullets li{font-size:13px;color:var(--text);display:flex;gap:8px;line-height:1.5;}
+.study-bullets li::before{content:'⟶';color:var(--cyan);flex-shrink:0;}
+.key-term{display:inline-block;background:rgba(155,89,255,0.15);border:1px solid rgba(155,89,255,0.4);border-radius:4px;padding:1px 6px;font-size:12px;color:#c89fff;font-weight:600;margin:1px;}
+.complete-btn{
+  width:100%;padding:16px;background:linear-gradient(135deg,var(--green),#00cc66);
+  color:#000;font-family:'Press Start 2P',monospace;font-size:10px;border:none;
+  border-radius:12px;cursor:pointer;transition:all 0.2s;margin-top:8px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.complete-btn:hover{box-shadow:0 8px 25px rgba(0,255,136,0.35);transform:translateY(-2px);}
+.complete-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.close-modal-btn{
+  position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.06);border:1px solid var(--border);
+  border-radius:8px;color:var(--muted);cursor:pointer;padding:8px 12px;font-size:14px;
+}
+
+/* ============ PROGRESS PAGE ============ */
+.progress-overview{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px;}
+.prog-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.prog-card-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.prog-icon{font-size:28px;}
+.prog-title{font-size:14px;font-weight:700;color:#fff;}
+.prog-code{font-size:10px;color:var(--muted);font-family:'Press Start 2P',monospace;}
+.prog-bar-outer{height:12px;background:rgba(255,255,255,0.07);border-radius:6px;overflow:hidden;margin-bottom:8px;}
+.prog-bar-inner{height:100%;border-radius:6px;transition:width 0.8s ease;}
+.prog-stats{display:flex;justify-content:space-between;font-size:12px;}
+.prog-pct{font-weight:700;} .prog-quests{color:var(--muted);}
+
+/* ACHIEVEMENTS */
+.achievements-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}
+.achieve{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:16px;text-align:center;transition:all 0.2s;
+}
+.achieve.unlocked{border-color:var(--gold);background:rgba(255,215,0,0.05);}
+.achieve:hover.unlocked{transform:translateY(-3px);}
+.achieve-icon{font-size:36px;margin-bottom:8px;filter:grayscale(1);opacity:0.4;}
+.achieve.unlocked .achieve-icon{filter:none;opacity:1;}
+.achieve-name{font-size:12px;font-weight:700;color:var(--muted);}
+.achieve.unlocked .achieve-name{color:#fff;}
+.achieve-desc{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* NOTIFICATIONS PANEL */
+.notif-panel{
+  position:fixed;top:70px;right:20px;width:300px;z-index:200;
+  background:var(--surface);border:1px solid var(--gold);border-radius:14px;
+  padding:16px;box-shadow:0 8px 40px rgba(0,0,0,0.5);
+  display:none;animation:slideIn 0.25s ease both;
+}
+.notif-panel.open{display:block;}
+@keyframes slideIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:none;}}
+.notif-title{font-family:'Press Start 2P',monospace;font-size:9px;color:var(--gold);margin-bottom:12px;}
+.notif-item{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.5;
+}
+.notif-item .ntime{font-size:10px;color:var(--muted);margin-top:4px;}
+
+/* LEADERBOARD */
+.lb-row{
+  display:flex;align-items:center;gap:14px;padding:14px 18px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;
+  transition:all 0.2s;
+}
+.lb-row.me{border-color:var(--gold);background:rgba(255,215,0,0.04);}
+.lb-rank{font-family:'Press Start 2P',monospace;font-size:12px;width:28px;text-align:center;flex-shrink:0;}
+.lb-avatar{font-size:24px;flex-shrink:0;}
+.lb-info{flex:1;}
+.lb-name{font-size:14px;font-weight:700;}
+.lb-level{font-size:11px;color:var(--muted);}
+.lb-xp{font-size:13px;color:var(--gold);font-weight:700;flex-shrink:0;}
+
+/* POWERPOINT DOWNLOAD */
+.ppt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.ppt-card{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:20px;transition:all 0.2s;
+}
+.ppt-card:hover{border-color:var(--orange);transform:translateY(-3px);}
+.ppt-icon{font-size:40px;margin-bottom:10px;}
+.ppt-name{font-size:14px;font-weight:700;color:#fff;margin-bottom:6px;}
+.ppt-weeks{font-size:12px;color:var(--muted);margin-bottom:12px;}
+.ppt-btn{
+  display:block;width:100%;padding:10px;background:linear-gradient(135deg,#d04000,var(--orange));
+  color:#fff;text-align:center;border-radius:8px;font-size:11px;font-weight:700;
+  cursor:pointer;border:none;font-family:'Exo 2',sans-serif;transition:all 0.2s;
+}
+.ppt-btn:hover{box-shadow:0 4px 15px rgba(255,107,53,0.4);}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:999;
+  background:var(--surface);border:1px solid var(--gold);border-radius:12px;
+  padding:14px 20px;max-width:320px;box-shadow:0 8px 30px rgba(0,0,0,0.5);
+  display:none;animation:toastPop 0.3s ease both;
+}
+.toast.show{display:flex;align-items:flex-start;gap:12px;}
+.toast-icon{font-size:24px;flex-shrink:0;}
+.toast-text .toast-title{font-size:13px;font-weight:700;color:var(--gold);margin-bottom:2px;}
+.toast-text .toast-body{font-size:12px;color:var(--muted);}
+@keyframes toastPop{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
+
+/* SECTION TITLE */
+.section-title{font-family:'Press Start 2P',monospace;font-size:11px;color:var(--gold);margin-bottom:16px;letter-spacing:1px;}
+.divider{height:1px;background:var(--border);margin:24px 0;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:rgba(0,245,255,0.2);border-radius:3px;}
+
+@keyframes levelUp{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.8);filter:brightness(2);}
+  100%{transform:scale(1);}
+}
+.level-up-anim{animation:levelUp 0.6s ease;}
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-icon" id="toast-icon">🎉</div>
+  <div class="toast-text">
+    <div class="toast-title" id="toast-title">Achievement!</div>
+    <div class="toast-body" id="toast-body">You did something great.</div>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS PANEL -->
+<div class="notif-panel" id="notif-panel">
+  <div class="notif-title">⚔ QUEST ALERTS</div>
+  <div id="notif-list"></div>
+</div>
+
+<!-- MODAL OVERLAY -->
+<div class="modal-overlay" id="modal-overlay">
+  <!-- content injected by JS -->
+</div>
+
+<!-- ============ LOGIN ============ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">⚔ ZETECH QUEST ⚔</div>
+    <div class="login-subtitle">STUDENT RPG DASHBOARD</div>
+    <div class="login-char" id="login-char">🧙</div>
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="setLoginTab('login')">LOGIN</button>
+      <button class="login-tab" onclick="setLoginTab('register')">NEW HERO</button>
+    </div>
+    <!-- LOGIN FORM -->
+    <div id="login-form">
+      <div class="form-group"><label>Student ID</label><input type="text" id="l-id" placeholder="e.g. ZU2024001"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="l-pass" placeholder="Your password"></div>
+      <button class="btn-primary" onclick="doLogin()">▶ ENTER THE QUEST</button>
+      <div class="login-error" id="login-error">❌ Invalid credentials. Try again!</div>
+    </div>
+    <!-- REGISTER FORM -->
+    <div id="register-form" style="display:none">
+      <div class="form-group"><label>Full Name</label><input type="text" id="r-name" placeholder="e.g. Amina Wanjiru"></div>
+      <div class="form-group"><label>Student ID</label><input type="text" id="r-id" placeholder="e.g. ZU2024001"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="r-pass" placeholder="Choose a password"></div>
+      <div class="form-group"><label>Choose Your Class</label></div>
+      <div class="class-avatars" id="class-avatars">
+        <div class="avatar-opt selected" data-class="Wizard" data-emoji="🧙" onclick="selectClass(this)"><span class="emoji">🧙</span><span class="aname">Wizard</span></div>
+        <div class="avatar-opt" data-class="Knight" data-emoji="⚔️" onclick="selectClass(this)"><span class="emoji">⚔️</span><span class="aname">Knight</span></div>
+        <div class="avatar-opt" data-class="Rogue" data-emoji="🗡️" onclick="selectClass(this)"><span class="emoji">🗡️</span><span class="aname">Rogue</span></div>
+        <div class="avatar-opt" data-class="Mage" data-emoji="🔮" onclick="selectClass(this)"><span class="emoji">🔮</span><span class="aname">Mage</span></div>
+        <div class="avatar-opt" data-class="Ranger" data-emoji="🏹" onclick="selectClass(this)"><span class="emoji">🏹</span><span class="aname">Ranger</span></div>
+        <div class="avatar-opt" data-class="Paladin" data-emoji="🛡️" onclick="selectClass(this)"><span class="emoji">🛡️</span><span class="aname">Paladin</span></div>
+      </div>
+      <button class="btn-primary" onclick="doRegister()">⚡ CREATE HERO</button>
+      <div class="login-error" id="reg-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MAIN APP ============ -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">⚔ ZETECH QUEST</div>
+    <div class="topbar-char" id="tb-char">🧙</div>
+    <div class="topbar-info">
+      <div class="topbar-name" id="tb-name">Hero</div>
+      <div class="topbar-level" id="tb-level">LV.1 WIZARD</div>
+      <div class="xp-bar-wrap"><div class="xp-bar" id="tb-xp-bar" style="width:0%"></div></div>
+    </div>
+    <div class="topbar-stats">
+      <div class="stat-pill"><span class="icon">⭐</span><span id="tb-xp">0</span> XP</div>
+      <div class="stat-pill"><span class="icon">🏆</span><span id="tb-trophies">0</span></div>
+      <div class="stat-pill"><span class="icon">🔥</span><span id="tb-streak">0</span></div>
+    </div>
+    <button class="notif-btn" onclick="toggleNotif()" id="notif-btn">🔔<span class="notif-badge" id="notif-badge">0</span></button>
+    <button class="logout-btn" onclick="doLogout()">LOGOUT</button>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dashboard',this)">🏰 Kingdom</button>
+    <button class="nav-tab" onclick="showPage('quests',this)">⚔ Quests</button>
+    <button class="nav-tab" onclick="showPage('progress',this)">📊 Progress</button>
+    <button class="nav-tab" onclick="showPage('achievements',this)">🏆 Trophies</button>
+    <button class="nav-tab" onclick="showPage('leaderboard',this)">👑 Ranks</button>
+    <button class="nav-tab" onclick="showPage('downloads',this)">📥 PowerPoints</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="dash-grid">
+      <div class="hero-card">
+        <div class="hero-avatar-big" id="d-avatar">🧙</div>
+        <div class="hero-details">
+          <div class="hero-name" id="d-name">Hero</div>
+          <div class="hero-class" id="d-class">LV.1 WIZARD</div>
+          <div class="hero-attrs">
+            <div class="attr"><div class="attr-val" id="d-intel">10</div><div class="attr-name">Intel</div></div>
+            <div class="attr"><div class="attr-val" id="d-str">8</div><div class="attr-name">Power</div></div>
+            <div class="attr"><div class="attr-val" id="d-def">7</div><div class="attr-name">Defense</div></div>
+            <div class="attr"><div class="attr-val" id="d-luck">9</div><div class="attr-name">Luck</div></div>
+          </div>
+        </div>
+        <div class="hero-xp-section">
+          <div class="xp-label">EXPERIENCE</div>
+          <div class="big-xp-bar"><div class="big-xp-fill" id="d-xp-bar" style="width:0%"></div></div>
+          <div class="xp-nums" id="d-xp-nums">0 / 500 XP</div>
+          <div style="margin-top:12px;font-size:12px;color:var(--muted);" id="d-quests-done">0 quests completed</div>
+          <div style="margin-top:6px;font-size:12px;color:var(--muted);" id="d-bosses-done">0 bosses defeated</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-title">Total XP Earned</div>
+        <div class="stat-card-val" style="color:var(--gold)" id="ds-xp">0</div>
+        <div class="stat-card-sub">Keep grinding!</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-title">Courses Active</div>
+        <div class="stat-card-val" style="color:var(--cyan)">5</div>
+        <div class="stat-card-sub">This semester</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-title">Bosses Defeated</div>
+        <div class="stat-card-val" style="color:var(--red)" id="ds-bosses">0</div>
+        <div class="stat-card-sub">Final exams slain</div>
+      </div>
+    </div>
+
+    <div class="section-title">📚 YOUR COURSE DUNGEONS</div>
+    <div class="courses-grid" id="courses-grid"></div>
+  </div>
+
+  <!-- QUESTS -->
+  <div class="page" id="page-quests">
+    <div class="section-title">⚔ QUEST MAP — CHOOSE YOUR DUNGEON</div>
+    <div class="quest-course-select" id="qcs"></div>
+    <div class="quest-map" id="quest-map"></div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="page" id="page-progress">
+    <div class="section-title">📊 ADVENTURE PROGRESS</div>
+    <div class="progress-overview" id="progress-overview"></div>
+    <div class="section-title">📅 UPCOMING BOSS FIGHTS</div>
+    <div id="upcoming-bosses"></div>
+  </div>
+
+  <!-- ACHIEVEMENTS -->
+  <div class="page" id="page-achievements">
+    <div class="section-title">🏆 TROPHY HALL</div>
+    <div class="achievements-grid" id="achievements-grid"></div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="page" id="page-leaderboard">
+    <div class="section-title">👑 HALL OF LEGENDS</div>
+    <div id="leaderboard-list"></div>
+  </div>
+
+  <!-- DOWNLOADS -->
+  <div class="page" id="page-downloads">
+    <div class="section-title">📥 SCROLL LIBRARY — DOWNLOAD POWERPOINTS</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">These slides are generated summaries for each course topic. Click Download to save a study slide deck.</p>
+    <div class="ppt-grid" id="ppt-grid"></div>
+  </div>
+</div>
+
+<script>
+// ============ DATA ============
+const COURSES = [
+  {
+    id:'DIT211', code:'DIT 211', name:'Object Oriented Programming', icon:'💻',
+    color:'#00f5ff', lecturer:'Godfrey Chege',
+    quests:[
+      {week:'1-2',title:'C++ Basics & Syntax',xp:80,summary:'Learn the fundamentals of C++ including data types, variables, constants, cin/cout I/O and basic program structure.',keys:['#include','namespace std','int main()','cin >>','cout <<','const','data types'],topics:['C++ history & evolution','Setting up dev environment','Basic syntax & structure','Data types, variables, constants','Input and output (cin, cout)']},
+      {week:'3-4',title:'Control Structures',xp:90,summary:'Master decision making with if/else/switch and loops with for, while, do-while. Learn how to control program flow.',keys:['if/else','switch','for loop','while','do-while','break','continue'],topics:['if, else, else if, switch','Looping: for, while, do-while','Nested loops & conditionals','Intro to functions']},
+      {week:'5-6',title:'Functions & Recursion',xp:100,summary:'Define reusable functions, understand scope, implement function overloading and write recursive solutions.',keys:['function','parameters','return','scope','overloading','recursion','base case'],topics:['Defining & calling functions','Parameters & return values','Variable scope & lifetime','Function overloading','Recursion'],isAssignment:true,assignName:'Assignment 1'},
+      {week:'7',title:'Arrays & Strings',xp:110,summary:'Work with 1D and 2D arrays, perform search and sort operations, and use std::string for text handling.',keys:['int arr[]','2D array','std::string','.length()','.substr()','linear search'],topics:['1D & multidimensional arrays','Array operations','C-strings vs std::string','String handling functions'],isCAT:true,catName:'CAT 1'},
+      {week:'8',title:'Pointers & Memory',xp:120,summary:'Understand memory addresses, dereference pointers, and dynamically allocate/free memory with new and delete.',keys:['int* ptr','& address-of','* dereference','new','delete','delete[]','nullptr'],topics:['Pointer basics & arithmetic','Pointers and arrays','Pointers to functions','Dynamic memory: new & delete','Debugging pointer errors']},
+      {week:'9',title:'Structures & Enums',xp:100,summary:'Group related data using structs and create named constant sets with enum types.',keys:['struct','enum','dot operator .','arrow operator ->','arrays of structs'],topics:['Defining & using structures','Arrays of structures','Pointers to structures','Enumerations'],isAssignment:true,assignName:'Assignment 2'},
+      {week:'10',title:'Classes & OOP Part 1',xp:130,summary:'Transition to OOP: create classes with private/public access, implement constructors and destructors.',keys:['class','private','public','protected','constructor','destructor','object'],topics:['OOP concepts & paradigm','Classes & Objects','Member functions & data members','Access specifiers','Constructors & Destructors']},
+      {week:'11',title:'Inheritance & Polymorphism',xp:140,summary:'Extend classes with inheritance, override methods, and use virtual functions for runtime polymorphism.',keys:['inheritance','virtual','override','abstract','polymorphism','= 0'],topics:['Inheritance: single & multiple','Polymorphism & function overriding','Virtual functions','Abstract classes','Operator overloading']},
+      {week:'12',title:'Templates & File Handling',xp:130,summary:'Write generic code with templates, use friend functions, and read/write persistent data with file streams.',keys:['template<typename T>','friend','static','this pointer','ofstream','ifstream','fstream'],topics:['Friend functions','Static members','this pointer','Function & class templates','File I/O'],isCAT:true,catName:'CAT 2'},
+      {week:'FINAL',title:'⚠ BOSS: The Debug Dragon',xp:300,isBoss:true,bossEmoji:'🐲',bossDesc:'The final semester exam. A fearsome dragon guards all the knowledge of C++. Prove your mastery!',questions:[
+        {q:'What is the correct syntax to declare a pointer to an integer?',opts:['int* p;','pointer int p;','int &p;','*int p;'],ans:0},
+        {q:'Which keyword makes a class method callable on all subclasses via a base pointer?',opts:['static','virtual','override','public'],ans:1},
+        {q:'What does "= 0" after a virtual function declaration mean?',opts:['The function returns zero','It is a pure virtual function (abstract)','It has no parameters','It deletes the function'],ans:1},
+        {q:'Which operator correctly accesses a member through a pointer to a struct?',opts:['.','->',' ::','*'],ans:1},
+        {q:'To free a dynamically allocated array, you use:',opts:['free(arr)','delete arr','delete[] arr','remove arr'],ans:2},
+      ]}
+    ]
+  },
+  {
+    id:'DIT124', code:'DIT 124', name:'Database Systems', icon:'🗄️',
+    color:'#ffd700', lecturer:'Jane Mwongeli',
+    quests:[
+      {week:'1',title:'Intro to Database Systems',xp:70,summary:'Understand what databases are, the difference between data and information, and features of relational database systems.',keys:['database','DBMS','relational','data','information','table','record'],topics:['Definition of database, data, information','Database systems overview','Features of relational database products','Data management & application development']},
+      {week:'2',title:'File-Based vs Database Systems',xp:75,summary:'Explore the limitations of traditional file-based storage and understand why DBMSs were developed as a solution.',keys:['file-based system','data redundancy','data inconsistency','data isolation','DBMS advantages'],topics:['Define file-based systems','Limitations of file-based systems','Why databases were invented']},
+      {week:'3',title:'Database Classification & Components',xp:80,summary:'Classify databases by number of users, data model, and location. Understand the key components of a database environment.',keys:['centralized DB','distributed DB','relational model','hierarchical model','network model'],topics:['Classification by users/model/location','Components of database environment'],isCAT:true,catName:'CAT 1'},
+      {week:'4',title:'Database Architecture',xp:85,summary:'Understand 1-tier through N-tier database architectures and the three levels of data abstraction.',keys:['1-tier','2-tier','3-tier','N-tier','physical level','logical level','view level'],topics:['One/Two/Three/N-tier architecture','Data abstraction levels']},
+      {week:'5',title:'Database Lifecycle',xp:90,summary:'Follow the complete database lifecycle from planning through maintenance.',keys:['planning','system definition','requirements','conceptual design','implementation','testing','maintenance'],topics:['Database planning','System definition','Requirements collection','Design','Implementation','Testing & Maintenance'],isAssignment:true,assignName:'Assignment 1'},
+      {week:'6',title:'Conceptual Database Design',xp:95,summary:'Create conceptual models using ERD — identify entities, attributes, and relationships.',keys:['entity','attribute','relationship','ERD','primary key','foreign key','cardinality'],topics:['Relational model concepts','Entities & attributes','Relationships','Entity-Relationship Diagrams']},
+      {week:'7',title:'Logical Design & Normalization',xp:100,summary:'Transform ERDs into relational tables and apply normalization (1NF, 2NF, 3NF) to eliminate redundancy.',keys:['normalization','1NF','2NF','3NF','functional dependency','anomaly','relational model'],topics:['Relational data model','Normal forms 1NF/2NF/3NF','Importance of normalizing'],isCAT:true,catName:'CAT 2'},
+      {week:'8',title:'SQL — Data Definition Language',xp:100,summary:'Use DDL commands to create and modify database structures.',keys:['CREATE TABLE','ALTER TABLE','DROP TABLE','PRIMARY KEY','FOREIGN KEY','NOT NULL','UNIQUE'],topics:['CREATE, ALTER, DROP statements','Constraints: PK, FK, NOT NULL','Database schema definition']},
+      {week:'9',title:'SQL — Data Manipulation Language',xp:110,summary:'Query, insert, update, and delete records using DML commands.',keys:['SELECT','INSERT INTO','UPDATE','DELETE','WHERE','ORDER BY','GROUP BY','JOIN'],topics:['SELECT queries','INSERT/UPDATE/DELETE','Sorting & searching','Subqueries & JOINs'],isAssignment:true,assignName:'Assignment 2'},
+      {week:'10',title:'Data Control Language',xp:90,summary:'Manage database access permissions with GRANT and REVOKE.',keys:['GRANT','REVOKE','privileges','user roles','DCL','access control'],topics:['GRANT & REVOKE statements','Database privileges','User roles & permissions']},
+      {week:'11',title:'Database Security',xp:95,summary:'Protect databases from unauthorized access, injection attacks, and data breaches.',keys:['SQL injection','authentication','authorization','encryption','backup','audit trail'],topics:['Database security threats','Access control mechanisms','Encryption','Backup & recovery']},
+      {week:'FINAL',title:'⚠ BOSS: The SQL Sphinx',xp:300,isBoss:true,bossEmoji:'🦁',bossDesc:'The SQL Sphinx blocks your path with riddles of data. Answer all queries correctly to pass!',questions:[
+        {q:'Which SQL command retrieves data from a table?',opts:['INSERT','SELECT','UPDATE','CREATE'],ans:1},
+        {q:'Which normal form eliminates partial dependencies?',opts:['1NF','2NF','3NF','BCNF'],ans:1},
+        {q:'What does DDL stand for?',opts:['Data Definition Language','Data Deletion Language','Database Design Logic','Data Dependency Layer'],ans:0},
+        {q:'Which SQL clause filters rows AFTER grouping?',opts:['WHERE','HAVING','GROUP BY','ORDER BY'],ans:1},
+        {q:'A foreign key in a table references:',opts:['Any column in the same table','The primary key of another table','A view','An index'],ans:1},
+      ]}
+    ]
+  },
+  {
+    id:'DCF121', code:'DCF 121', name:'Cyber Security Essentials', icon:'🛡️',
+    color:'#ff4757', lecturer:'Omondi Alex Omieno',
+    quests:[
+      {week:'1',title:'Intro to Cybersecurity',xp:70,summary:'Enter the world of cyber defenders and attackers. Understand the evolving threat landscape and why cybersecurity matters.',keys:['threat actor','hacker','white hat','black hat','cyber threat','attack surface'],topics:['World of Wizards, Heros and Criminals','Evolution of Cyber Threats','Importance of cybersecurity in modern world']},
+      {week:'2',title:'The Cybersecurity Cube',xp:75,summary:'Explore the three dimensions of cybersecurity: security goals, countermeasures, and the IT security management framework.',keys:['CIA triad','countermeasures','security framework','NIST','ISO 27001'],topics:['Dimensions of Cybersecurity Cube','Cybersecurity Countermeasures','IT Security Management Framework']},
+      {week:'3',title:'Threats, Vulnerabilities & Attacks',xp:85,summary:'Catalog major breach types, common system vulnerabilities, and the various attack methods used by threat actors.',keys:['vulnerability','exploit','malware','phishing','DDoS','zero-day','CVE'],topics:['Top Cybersecurity Breaches','Common Vulnerabilities','Types of Cyber Attacks'],isAssignment:true,assignName:'Assignment 1'},
+      {week:'4',title:'Cybersecurity Awareness',xp:75,summary:'Design awareness programs that build a security-conscious organizational culture.',keys:['security awareness','phishing simulation','security culture','training','policy'],topics:['Elements of Cybersecurity Awareness Program','Building Security-Conscious Organization']},
+      {week:'5',title:'CIA Triad & Risk Management',xp:90,summary:'Deep-dive into Confidentiality, Integrity, Availability and learn how organizations manage cyber risk and comply with standards.',keys:['confidentiality','integrity','availability','risk assessment','ISO 27001','NIST CSF','compliance'],topics:['CIA Triad','Risk Management & Compliance','Cybersecurity Key Standards']},
+      {week:'6',title:'Cryptography & Access Control',xp:95,summary:'Understand encryption methods, access control models, and data obfuscation techniques.',keys:['symmetric encryption','asymmetric encryption','AES','RSA','access control','DAC','MAC','RBAC'],topics:['Cryptography fundamentals','Access Control models','Obscuring Data techniques']},
+      {week:'7',title:'Ensuring Data Integrity',xp:90,summary:'Explore digital signatures, certificates, and database integrity enforcement to ensure data is trustworthy.',keys:['digital signature','certificate','hash','SHA','MD5','PKI','integrity check'],topics:['Types of Data Integrity Controls','Digital Signatures & Certificates','Database Integrity Enforcement'],isCAT:true,catName:'CAT 1'},
+      {week:'8',title:'High Availability & Five Nines',xp:85,summary:'Learn what 99.999% uptime means, how to achieve high availability, and plan for disaster recovery.',keys:['high availability','99.999%','redundancy','failover','disaster recovery','RTO','RPO','backup'],topics:['High Availability','Measures to Improve Availability','Disaster Recovery Planning']},
+      {week:'9',title:'Defense-in-Depth',xp:95,summary:'Apply layered security models, network segmentation, and incident response planning.',keys:['defense-in-depth','layered security','network segmentation','DMZ','incident response','SIEM'],topics:['Defense-in-Depth & Layered Security','Network Segmentation','Incident Response & Management'],isAssignment:true,assignName:'Assignment 2'},
+      {week:'10',title:'Hardening Systems & Networks',xp:90,summary:'Harden servers, networks, and physical infrastructure against attacks.',keys:['server hardening','network hardening','patch management','firewall','IDS','IPS','physical security'],topics:['Defending Systems & Devices','Server Hardening','Network Hardening','Physical Security']},
+      {week:'11',title:'Careers in Cybersecurity',xp:80,summary:'Explore cybersecurity domains, career paths, and the ethical responsibilities of a security professional.',keys:['CISO','penetration tester','SOC analyst','ethical hacking','cyber law','professional ethics'],topics:['Cybersecurity Domains','Cybersecurity Culture','Building a Career in Cybersecurity','Ethical Considerations']},
+      {week:'FINAL',title:'⚠ BOSS: The Phantom Hacker',xp:300,isBoss:true,bossEmoji:'👾',bossDesc:'A mysterious hacker has breached the system! Use your cybersecurity knowledge to repel the attack!',questions:[
+        {q:'What does CIA stand for in cybersecurity?',opts:['Confidentiality, Integrity, Availability','Central Intelligence Agency','Cipher, Identity, Authentication','Control, Integrity, Access'],ans:0},
+        {q:'Which encryption uses two different keys (public & private)?',opts:['Symmetric','AES','Asymmetric','DES'],ans:2},
+        {q:'What is a zero-day vulnerability?',opts:['A bug fixed the same day','An unknown vulnerability with no existing patch','An attack that takes zero seconds','A vulnerability affecting only old software'],ans:1},
+        {q:'What does "defense-in-depth" mean?',opts:['One very strong firewall','Multiple layered security controls','Defending network perimeter only','Encrypting all data'],ans:1},
+        {q:'99.999% uptime is known as:',opts:['Four nines','High availability','Five nines','Zero downtime'],ans:2},
+      ]}
+    ]
+  },
+  {
+    id:'DIT122', code:'DIT 122', name:'Operating Systems', icon:'⚙️',
+    color:'#00ff88', lecturer:'Eric Kiriinya',
+    quests:[
+      {week:'1',title:'OS Fundamentals',xp:75,summary:'Define operating systems, identify their types (batch, multitasking, real-time etc.) and understand their architectural structures.',keys:['OS','kernel','batch OS','multitasking','real-time','embedded','monolithic','microkernel'],topics:['Definition & purpose of an OS','Types: Batch, Multitasking, Time-sharing, Distributed, Real-time, Embedded','OS structure: Monolithic, Layered, Microkernel, Modular']},
+      {week:'2',title:'OS Functions',xp:80,summary:'Explore the five core functions every OS must perform: process, memory, file, I/O management, and security.',keys:['process management','memory management','file system','I/O management','security','protection'],topics:['Process management','Memory management','File system management','I/O device management','Security & protection']},
+      {week:'3',title:'Process Management & Scheduling',xp:95,summary:'Understand processes and threads, their lifecycle states, and the algorithms used to schedule CPU time.',keys:['process','thread','New/Ready/Running/Waiting/Terminated','FCFS','SJF','Round Robin','Priority scheduling','preemptive'],topics:['Processes & Threads lifecycle','Process states','CPU scheduling algorithms (FCFS, SJF, RR, Priority)','Process synchronization'],isCAT:true,catName:'CAT 1'},
+      {week:'4',title:'Memory Management',xp:90,summary:'Learn how OS manages RAM through contiguous allocation, paging, and segmentation to prevent fragmentation.',keys:['RAM','paging','segmentation','page table','fragmentation','fixed partitioning','dynamic partitioning'],topics:['Memory hierarchy','Contiguous memory allocation','Fixed & dynamic partitioning','Fragmentation: internal & external','Paging & Segmentation']},
+      {week:'5',title:'Virtual Memory',xp:95,summary:'Extend physical memory using virtual memory concepts — page tables, TLBs, demand paging, and replacement algorithms.',keys:['virtual memory','demand paging','page fault','TLB','FIFO','LRU','thrashing','working set'],topics:['Logical vs physical memory','Page tables & TLBs','Page replacement: FIFO, LRU, Optimal','Thrashing & working set','Demand paging'],isAssignment:true,assignName:'Assignment 1'},
+      {week:'6',title:'File System Management',xp:90,summary:'Understand file concepts, access methods, directory structures, and how files are allocated on disk.',keys:['file','directory','sequential access','direct access','FAT','inode','contiguous allocation','linked allocation'],topics:['File concept: types, attributes, operations','Sequential vs direct access','Directory structures','File allocation: contiguous, linked, indexed']},
+      {week:'7',title:'I/O Management',xp:85,summary:'Manage input/output devices using polling, interrupts, and DMA. Understand disk scheduling strategies.',keys:['block device','character device','DMA','interrupt','programmed I/O','device driver','FCFS','SSTF','SCAN'],topics:['I/O devices & controllers','Programmed I/O, Interrupt-driven I/O, DMA','Disk scheduling: FCFS, SSTF, SCAN, C-SCAN'],isCAT:true,catName:'CAT 2'},
+      {week:'9',title:'Deadlocks',xp:90,summary:'Identify conditions that cause deadlocks and learn strategies to prevent, avoid, detect, and recover from them.',keys:['deadlock','mutual exclusion','hold and wait','no preemption','circular wait','Banker\'s algorithm','resource allocation graph'],topics:['Deadlock conditions','Resource allocation graphs','Deadlock prevention & avoidance','Detection & recovery'],isAssignment:true,assignName:'Assignment 2'},
+      {week:'10-11',title:'OS Security',xp:95,summary:'Protect operating systems through access controls, authentication, encryption, and defenses against malware.',keys:['ACL','authentication','biometrics','2FA','encryption','symmetric','asymmetric','firewall','IDS','antivirus'],topics:['Security goals (CIA)','Threats & vulnerabilities','ACLs & capabilities','User authentication','Encryption & cryptography','Malware types & defenses']},
+      {week:'12',title:'Distributed Systems',xp:85,summary:'Explore distributed OS characteristics, distributed file systems, and inter-process communication.',keys:['distributed OS','distributed file system','RPC','message passing','transparency','scalability'],topics:['Characteristics of distributed OS','Architecture of distributed systems','Distributed file systems & communication'],isCAT:true,catName:'CAT 3'},
+      {week:'FINAL',title:'⚠ BOSS: The Kernel Kraken',xp:300,isBoss:true,bossEmoji:'🐙',bossDesc:'The Kernel Kraken has hijacked the system! Defeat it with your OS knowledge!',questions:[
+        {q:'Which page replacement algorithm replaces the page not used for the longest time?',opts:['FIFO','LRU','Optimal','Clock'],ans:1},
+        {q:'What are the four necessary conditions for deadlock?',opts:['Mutual exclusion, Hold & wait, No preemption, Circular wait','Lock, Wait, Block, Release','Hold, Signal, Preempt, Wait','Mutual exclusion, Resource sharing, Preemption, Starvation'],ans:0},
+        {q:'What is thrashing in virtual memory?',opts:['A disk access error','Excessive page faults causing the OS to spend more time paging than executing','When RAM is full','Cache overflow'],ans:1},
+        {q:'DMA stands for:',opts:['Direct Memory Access','Dynamic Memory Allocation','Data Management Algorithm','Disk Memory Address'],ans:0},
+        {q:'In UNIX, file permissions are managed using:',opts:['ACLs only','Permission bits (rwx)','Registry keys','Boot sector'],ans:1},
+      ]}
+    ]
+  },
+  {
+    id:'DIT123', code:'DIT 123', name:'Computer Networks / CCNA', icon:'🌐',
+    color:'#9b59ff', lecturer:'Stanley Otieno',
+    quests:[
+      {week:'1',title:'Networking Today',xp:70,summary:'Understand what networks are, their components (hosts, intermediary devices, media), and the types of networks.',keys:['LAN','WAN','MAN','host','router','switch','hub','bandwidth','topology'],topics:['Network Components','Types of Networks: LAN, WAN, MAN','Network topologies','Network media']},
+      {week:'2',title:'Switch & Device Configuration',xp:80,summary:'Perform initial switch and end device configuration including IP assignment and connectivity testing.',keys:['switch','hostname','password','enable mode','privileged EXEC','IP address','default gateway','ping'],topics:['Initial switch configuration','Device hostname & passwords','IP address assignment','Connectivity testing with ping']},
+      {week:'3',title:'OSI & TCP/IP Models',xp:90,summary:'Navigate the 7-layer OSI model and TCP/IP model and understand how protocols work at each layer.',keys:['OSI model','TCP/IP','Physical','Data Link','Network','Transport','Session','Presentation','Application','encapsulation'],topics:['OSI 7-layer model','TCP/IP model layers','Protocol suites','Encapsulation & decapsulation'],isCAT:true,catName:'CAT 1'},
+      {week:'4',title:'Physical Layer & Number Systems',xp:85,summary:'Understand signal transmission media, bandwidth concepts, and convert between binary, decimal, and hexadecimal.',keys:['bandwidth','throughput','copper cable','fiber optic','wireless','binary','hexadecimal','decimal conversion'],topics:['Cabling & transmission media','Bandwidth & throughput','Binary conversion','Hexadecimal conversion']},
+      {week:'5',title:'Data Link Layer',xp:90,summary:'Learn how MAC addresses uniquely identify devices, how frames are structured, and how errors are detected.',keys:['MAC address','frame','framing','CRC','Ethernet','half-duplex','full-duplex','LLC','MAC sublayer'],topics:['MAC addressing','Framing structure','Error detection (CRC)','Ethernet standards'],isAssignment:true,assignName:'Assignment 1'},
+      {week:'6',title:'Ethernet Switching & VLANs',xp:95,summary:'Configure VLANs to segment networks and understand how Spanning Tree Protocol prevents loops.',keys:['VLAN','trunk','access port','STP','Spanning Tree','broadcast domain','collision domain','switch operation'],topics:['VLANs: purpose & configuration','Spanning Tree Protocol','Switch operation','Broadcast vs collision domains']},
+      {week:'7',title:'Network Layer & IP Addressing',xp:100,summary:'Understand routing concepts, IP addressing, and basic subnetting at the network layer.',keys:['IP address','subnet mask','routing','router','IPv4','default gateway','CIDR','subnetting'],topics:['IP Addressing','Routing fundamentals','Subnetting basics','IPv4 packet structure'],isCAT:true,catName:'CAT 2'},
+      {week:'8',title:'Address Resolution & ARP',xp:85,summary:'See how ARP maps IP addresses to MAC addresses and understand the complete address resolution process.',keys:['ARP','ARP table','ARP request','ARP reply','RARP','broadcast','unicast','MAC resolution'],topics:['ARP protocol operation','ARP request & reply','ARP table/cache','RARP']},
+      {week:'9',title:'Router Configuration',xp:95,summary:'Configure router interfaces, set up static routes, and verify routing tables.',keys:['router interface','static route','routing table','ip route command','show ip route','serial interface','Gigabit Ethernet'],topics:['Router interfaces & configuration','Static routing','Routing verification','Basic router commands'],isAssignment:true,assignName:'Assignment 2'},
+      {week:'10',title:'IPv4 & IPv6 Addressing',xp:95,summary:'Master IP address classes, IPv6 structure, and subnetting for both address families.',keys:['Class A/B/C','private address','public address','IPv6','128-bit','::','subnetting','VLSM','CIDR'],topics:['IPv4 address classes','Private vs public addresses','IPv6 address structure','Subnetting & VLSM']},
+      {week:'11',title:'Transport & Application Layers',xp:90,summary:'Compare TCP vs UDP, and understand key application layer protocols like DNS, HTTP, and FTP.',keys:['TCP','UDP','three-way handshake','port number','DNS','HTTP','HTTPS','FTP','DHCP','ICMP','ping','traceroute'],topics:['ICMP: ping & traceroute','TCP vs UDP','DNS, HTTP, FTP, DHCP','Port numbers']},
+      {week:'FINAL',title:'⚠ BOSS: The Network Hydra',xp:300,isBoss:true,bossEmoji:'🐍',bossDesc:'The Network Hydra blocks all packets! Each head represents a network layer. Cut them all down!',questions:[
+        {q:'How many layers does the OSI model have?',opts:['4','5','7','9'],ans:2},
+        {q:'Which protocol maps IP addresses to MAC addresses?',opts:['DNS','DHCP','ARP','ICMP'],ans:2},
+        {q:'What is the purpose of a VLAN?',opts:['Connect two routers','Segment a network into broadcast domains','Increase bandwidth','Replace IP addresses'],ans:1},
+        {q:'TCP guarantees delivery through:',opts:['UDP','Three-way handshake','ARP','MAC addressing'],ans:1},
+        {q:'Which command verifies an IP routing table on a Cisco router?',opts:['show arp','show ip interface','show ip route','ipconfig /all'],ans:2},
+      ]}
+    ]
+  }
+];
+
+const XP_PER_LEVEL = [0,500,1200,2200,3500,5000,7000,9500,12500,16000,20000];
+const ACHIEVEMENTS_DEF = [
+  {id:'first_quest',name:'First Steps',desc:'Complete your first quest',icon:'👣',check:p=>p.totalQuests>=1},
+  {id:'boss_slayer',name:'Boss Slayer',desc:'Defeat your first boss',icon:'⚔️',check:p=>p.totalBosses>=1},
+  {id:'five_quests',name:'Adventurer',desc:'Complete 5 quests',icon:'🎯',check:p=>p.totalQuests>=5},
+  {id:'ten_quests',name:'Hero',desc:'Complete 10 quests',icon:'🦸',check:p=>p.totalQuests>=10},
+  {id:'three_bosses',name:'Dragon Slayer',desc:'Defeat 3 bosses',icon:'🐲',check:p=>p.totalBosses>=3},
+  {id:'all_bosses',name:'Legend',desc:'Defeat ALL bosses',icon:'👑',check:p=>p.totalBosses>=5},
+  {id:'lv5',name:'Seasoned',desc:'Reach Level 5',icon:'⭐',check:p=>p.level>=5},
+  {id:'lv10',name:'Master',desc:'Reach Level 10',icon:'🌟',check:p=>p.level>=10},
+  {id:'scholar',name:'Scholar',desc:'Earn 2000 XP',icon:'📚',check:p=>p.xp>=2000},
+  {id:'grand_scholar',name:'Grand Scholar',desc:'Earn 5000 XP',icon:'🎓',check:p=>p.xp>=5000},
+  {id:'streak3',name:'On Fire',desc:'3-day study streak',icon:'🔥',check:p=>p.streak>=3},
+  {id:'fullclear',name:'Completionist',desc:'Complete every quest',icon:'🌈',check:p=>p.totalQuests>=46},
+];
+
+// ============ STATE ============
+let currentUser = null;
+let selectedQuestCourse = 'DIT211';
+let bossState = null;
+let activeModal = null;
+let notifications = [];
+
+function getUsers(){ return JSON.parse(localStorage.getItem('ztq_users')||'{}'); }
+function saveUsers(u){ localStorage.setItem('ztq_users',JSON.stringify(u)); }
+function getProgress(uid){ return JSON.parse(localStorage.getItem('ztq_prog_'+uid)||'{}'); }
+function saveProgress(uid,p){ localStorage.setItem('ztq_prog_'+uid,JSON.stringify(p)); }
+
+function defaultProgress(){
+  return {xp:0,level:1,totalQuests:0,totalBosses:0,completedQuests:{},streak:0,lastLogin:null,achievements:[],notifications:[]};
+}
+
+// ============ STARS ============
+function makeStars(){
+  const c=document.getElementById('stars');
+  for(let i=0;i<120;i++){
+    const s=document.createElement('div');
+    const sz=Math.random()*2.5+0.5;
+    s.className='star';
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;background:#fff;--d:${2+Math.random()*4}s;--delay:${-Math.random()*5}s;opacity:${Math.random()*0.7+0.1}`;
+    c.appendChild(s);
+  }
+}
+
+// ============ AUTH ============
+function setLoginTab(t){
+  document.querySelectorAll('.login-tab').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('login-form').style.display=t==='login'?'block':'none';
+  document.getElementById('register-form').style.display=t==='register'?'block':'none';
+}
+function selectClass(el){
+  document.querySelectorAll('.avatar-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('login-char').textContent=el.dataset.emoji;
+}
+function doLogin(){
+  const id=document.getElementById('l-id').value.trim();
+  const pass=document.getElementById('l-pass').value;
+  const users=getUsers();
+  const err=document.getElementById('login-error');
+  if(!users[id]||users[id].password!==pass){err.style.display='block';return;}
+  err.style.display='none';
+  currentUser=users[id];
+  startApp();
+}
+function doRegister(){
+  const name=document.getElementById('r-name').value.trim();
+  const id=document.getElementById('r-id').value.trim();
+  const pass=document.getElementById('r-pass').value;
+  const classEl=document.querySelector('.avatar-opt.selected');
+  const err=document.getElementById('reg-error');
+  if(!name||!id||!pass){err.textContent='⚠ Please fill all fields!';err.style.display='block';return;}
+  const users=getUsers();
+  if(users[id]){err.textContent='⚠ Student ID already exists!';err.style.display='block';return;}
+  const hero={id,name,password:pass,heroClass:classEl.dataset.class,emoji:classEl.dataset.emoji,created:Date.now()};
+  users[id]=hero;
+  saveUsers(users);
+  currentUser=hero;
+  saveProgress(id,defaultProgress());
+  startApp();
+}
+function doLogout(){
+  currentUser=null;
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+// ============ LEVEL CALC ============
+function getLevel(xp){
+  for(let i=XP_PER_LEVEL.length-1;i>=0;i--)if(xp>=XP_PER_LEVEL[i])return i+1;
+  return 1;
+}
+function xpForNextLevel(lv){ return XP_PER_LEVEL[Math.min(lv,XP_PER_LEVEL.length-1)]||XP_PER_LEVEL[XP_PER_LEVEL.length-1]; }
+function xpForCurrentLevel(lv){ return XP_PER_LEVEL[Math.min(lv-1,XP_PER_LEVEL.length-1)]||0; }
+function xpPercent(xp,lv){ const lo=xpForCurrentLevel(lv),hi=xpForNextLevel(lv); return Math.min(100,Math.round((xp-lo)/(hi-lo)*100)); }
+
+// ============ START APP ============
+function startApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  const prog=getProgress(currentUser.id);
+  const today=new Date().toDateString();
+  if(prog.lastLogin!==today){prog.streak=(prog.lastLogin===new Date(Date.now()-86400000).toDateString())?prog.streak+1:1;prog.lastLogin=today;}
+  saveProgress(currentUser.id,prog);
+  addNotif('⚔ Quest awaits!','Log in and conquer a new topic today. Your adventure continues!');
+  renderAll();
+}
+
+function renderAll(){
+  updateTopbar();
+  renderDashboard();
+  renderQuests();
+  renderProgress();
+  renderAchievements();
+  renderLeaderboard();
+  renderDownloads();
+  renderNotifs();
+}
+
+function updateTopbar(){
+  const prog=getProgress(currentUser.id);
+  const lv=getLevel(prog.xp);
+  const pct=xpPercent(prog.xp,lv);
+  document.getElementById('tb-char').textContent=currentUser.emoji;
+  document.getElementById('tb-name').textContent=currentUser.name;
+  document.getElementById('tb-level').textContent=`LV.${lv} ${currentUser.heroClass.toUpperCase()}`;
+  document.getElementById('tb-xp-bar').style.width=pct+'%';
+  document.getElementById('tb-xp').textContent=prog.xp;
+  document.getElementById('tb-trophies').textContent=prog.achievements.length;
+  document.getElementById('tb-streak').textContent=prog.streak;
+}
+
+function renderDashboard(){
+  const prog=getProgress(currentUser.id);
+  const lv=getLevel(prog.xp);
+  const pct=xpPercent(prog.xp,lv);
+  document.getElementById('d-avatar').textContent=currentUser.emoji;
+  document.getElementById('d-name').textContent=currentUser.name;
+  document.getElementById('d-class').textContent=`LV.${lv} ${currentUser.heroClass.toUpperCase()}`;
+  document.getElementById('d-xp-bar').style.width=pct+'%';
+  document.getElementById('d-xp-nums').textContent=`${prog.xp} / ${xpForNextLevel(lv)} XP`;
+  document.getElementById('d-quests-done').textContent=`${prog.totalQuests} quests completed`;
+  document.getElementById('d-bosses-done').textContent=`${prog.totalBosses} bosses defeated`;
+  document.getElementById('ds-xp').textContent=prog.xp;
+  document.getElementById('ds-bosses').textContent=prog.totalBosses;
+  // Stats
+  const attrs={intel:10,str:8,def:7,luck:9};
+  attrs.intel+=Math.floor(prog.totalQuests*0.5);
+  attrs.str+=Math.floor(prog.totalBosses*2);
+  attrs.def+=Math.floor(prog.xp/200);
+  attrs.luck+=Math.floor(prog.streak*0.5);
+  document.getElementById('d-intel').textContent=attrs.intel;
+  document.getElementById('d-str').textContent=attrs.str;
+  document.getElementById('d-def').textContent=attrs.def;
+  document.getElementById('d-luck').textContent=attrs.luck;
+  // Courses
+  const cg=document.getElementById('courses-grid');
+  cg.innerHTML=COURSES.map(c=>{
+    const qs=c.quests.filter(q=>!q.isBoss);
+    const done=qs.filter(q=>prog.completedQuests[c.id+'_'+c.quests.indexOf(q)]).length;
+    const pctC=Math.round(done/qs.length*100);
+    const bossQ=c.quests.find(q=>q.isBoss);
+    const bossIdx=c.quests.indexOf(bossQ);
+    const bossDone=prog.completedQuests[c.id+'_'+bossIdx];
+    return `<div class="course-card" onclick="showPage('quests');document.querySelectorAll('.nav-tab')[1].classList.add('active');document.querySelectorAll('.nav-tab')[0].classList.remove('active');selectQuestCourse('${c.id}')">
+      <div class="course-banner" style="background:${c.color}"></div>
+      <div class="course-body">
+        <div class="course-icon">${c.icon}</div>
+        <div class="course-code">${c.code}</div>
+        <div class="course-name">${c.name}</div>
+        <div class="course-progress-wrap"><div class="course-progress-fill" style="width:${pctC}%;background:${c.color}"></div></div>
+        <div class="course-progress-label">${pctC}% complete — ${done}/${qs.length} quests</div>
+        <div class="quest-count">${bossDone?'✅ Boss defeated!':'⚠ Boss fight unlocked after all quests'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderQuests(){
+  const qcs=document.getElementById('qcs');
+  qcs.innerHTML=COURSES.map(c=>`<button class="qcs-btn${c.id===selectedQuestCourse?' active':''}" onclick="selectQuestCourse('${c.id}')">${c.icon} ${c.code}</button>`).join('');
+  renderQuestMap();
+}
+
+function selectQuestCourse(id){
+  selectedQuestCourse=id;
+  document.querySelectorAll('.qcs-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.qcs-btn').forEach(b=>{if(b.textContent.includes(COURSES.find(c=>c.id===id).code))b.classList.add('active');});
+  renderQuestMap();
+}
+
+function renderQuestMap(){
+  const course=COURSES.find(c=>c.id===selectedQuestCourse);
+  const prog=getProgress(currentUser.id);
+  const qm=document.getElementById('quest-map');
+  let html='';
+  course.quests.forEach((q,i)=>{
+    const key=course.id+'_'+i;
+    const done=!!prog.completedQuests[key];
+    const prevDone=i===0||!!prog.completedQuests[course.id+'_'+(i-1)];
+    const allNonBossDone=course.quests.filter(x=>!x.isBoss).every((x,xi)=>prog.completedQuests[course.id+'_'+xi]);
+    const locked=q.isBoss?!allNonBossDone:!prevDone;
+    const isActive=!done&&!locked;
+    let numClass=done?'done':q.isBoss?'boss-n':isActive?'active-n':'lock-n';
+    let nodeClass='quest-node'+(q.isBoss?' boss':'')+(done?' completed':'')+(isActive?' active-quest':'')+(locked?' locked':'');
+    let tag=done?`<span class="quest-type-tag tag-done">✅ COMPLETED</span>`:q.isBoss?`<span class="quest-type-tag tag-boss">💀 BOSS FIGHT</span>`:locked?`<span class="quest-type-tag tag-lock">🔒 LOCKED</span>`:`<span class="quest-type-tag tag-quest">⚔ QUEST</span>`;
+    let xpLabel=done?`<div style="color:var(--green);font-size:12px">+${q.xp} XP ✅</div>`:`<div class="quest-xp">+${q.xp} XP</div>`;
+    let assignBadge=q.isAssignment?`<span style="background:rgba(155,89,255,0.2);color:#c89fff;border:1px solid #9b59ff;border-radius:4px;padding:2px 6px;font-size:10px;margin-left:6px">📝 ${q.assignName}</span>`:'';
+    let catBadge=q.isCAT?`<span style="background:rgba(255,107,53,0.2);color:var(--orange);border:1px solid var(--orange);border-radius:4px;padding:2px 6px;font-size:10px;margin-left:6px">🔥 ${q.catName}</span>`:'';
+    let onclick=locked?'':q.isBoss?`onclick="openBossFight('${course.id}',${i})"`:done?`onclick="openStudyModal('${course.id}',${i},true)"`:  `onclick="openStudyModal('${course.id}',${i},false)"`;
+    if(i>0) html+=`<div class="quest-connector${prog.completedQuests[course.id+'_'+(i-1)]?' done':''}"></div>`;
+    html+=`<div class="${nodeClass}" ${onclick}>
+      <div class="quest-num ${numClass}">${done?'✓':q.isBoss?'💀':i+1}</div>
+      <div class="quest-info">
+        <div class="quest-week">WEEK ${q.week}</div>
+        <div class="quest-title">${q.title} ${assignBadge}${catBadge}</div>
+        ${tag}
+      </div>
+      ${xpLabel}
+    </div>`;
+  });
+  qm.innerHTML=html;
+}
+
+function openStudyModal(courseId,questIdx,readOnly){
+  const course=COURSES.find(c=>c.id===courseId);
+  const q=course.quests[questIdx];
+  const prog=getProgress(currentUser.id);
+  const key=courseId+'_'+questIdx;
+  const done=!!prog.completedQuests[key];
+  const overlay=document.getElementById('modal-overlay');
+  overlay.innerHTML=`<div class="study-modal" style="position:relative">
+    <button class="close-modal-btn" onclick="closeModal()">✕</button>
+    <div class="study-header">
+      <div class="study-icon">${course.icon}</div>
+      <div class="study-meta">
+        <div class="study-week-tag">${course.code} · WEEK ${q.week}</div>
+        <div class="study-title">${q.title}</div>
+        <div class="study-xp-tag">⭐ +${q.xp} XP</div>
+      </div>
+    </div>
+    <div class="study-section">
+      <div class="study-section-title">📖 Quest Summary</div>
+      <p>${q.summary}</p>
+    </div>
+    <div class="study-section">
+      <div class="study-section-title">💡 Key Topics</div>
+      <ul class="study-bullets">${q.topics.map(t=>`<li>${t}</li>`).join('')}</ul>
+    </div>
+    <div class="study-section">
+      <div class="study-section-title">🔑 Key Terms to Master</div>
+      <div>${q.keys.map(k=>`<span class="key-term">${k}</span>`).join(' ')}</div>
+    </div>
+    ${done?'<div style="text-align:center;padding:14px;background:rgba(0,255,136,0.08);border:1px solid var(--green);border-radius:10px;color:var(--green);font-weight:700;font-size:13px">✅ Quest Already Completed!</div>':
+    `<button class="complete-btn" onclick="completeQuest('${courseId}',${questIdx})">⚔ MARK QUEST COMPLETE — CLAIM ${q.xp} XP</button>`}
+  </div>`;
+  overlay.classList.add('open');
+  activeModal='study';
+}
+
+function completeQuest(courseId,questIdx){
+  const prog=getProgress(currentUser.id);
+  const key=courseId+'_'+questIdx;
+  if(prog.completedQuests[key])return;
+  const course=COURSES.find(c=>c.id===courseId);
+  const q=course.quests[questIdx];
+  const oldLevel=getLevel(prog.xp);
+  prog.xp+=q.xp;
+  prog.completedQuests[key]=Date.now();
+  prog.totalQuests++;
+  const newLevel=getLevel(prog.xp);
+  checkAchievements(prog);
+  saveProgress(currentUser.id,prog);
+  closeModal();
+  if(newLevel>oldLevel){
+    showToast('⬆️','Level Up!',`You reached Level ${newLevel} ${currentUser.heroClass}! Power increases!`);
+    addNotif('⬆️ LEVEL UP!',`You've reached Level ${newLevel}! Your ${currentUser.heroClass} grows stronger!`);
+  } else {
+    showToast('⭐',`Quest Complete!`,`+${q.xp} XP earned! Keep going, ${currentUser.name.split(' ')[0]}!`);
+  }
+  addNotif('⚔ Quest Conquered',`"${q.title}" defeated! +${q.xp} XP added to your legend.`);
+  renderAll();
+}
+
+function openBossFight(courseId,questIdx){
+  const course=COURSES.find(c=>c.id===courseId);
+  const q=course.quests[questIdx];
+  const prog=getProgress(currentUser.id);
+  const key=courseId+'_'+questIdx;
+  if(prog.completedQuests[key]){ showToast('✅','Already Slain!','You already defeated this boss. Your legend grows!'); return; }
+  bossState={courseId,questIdx,answers:{},score:0,q,key,totalQ:q.questions.length,hp:100};
+  renderBossModal();
+}
+
+function renderBossModal(){
+  const {q}=bossState;
+  const overlay=document.getElementById('modal-overlay');
+  overlay.innerHTML=`<div class="boss-modal">
+    <div class="boss-header">
+      <div class="boss-emoji">${q.bossEmoji}</div>
+      <div class="boss-title">${q.title}</div>
+      <div class="boss-subtitle">${q.bossDesc}</div>
+    </div>
+    <div class="boss-hp-bar"><div class="boss-hp-fill" id="boss-hp-fill" style="width:100%"></div></div>
+    <div class="boss-hp-label" id="boss-hp-label">BOSS HP: 100%</div>
+    <div class="boss-questions" id="boss-questions">
+      ${q.questions.map((bq,qi)=>`
+        <div class="bq" id="bq-${qi}">
+          <div class="bq-text">⚔ Q${qi+1}: ${bq.q}</div>
+          <div class="bq-options">
+            ${bq.opts.map((opt,oi)=>`<button class="bq-opt" id="bqo-${qi}-${oi}" onclick="answerBoss(${qi},${oi})">${opt}</button>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="boss-result" id="boss-result"></div>
+    <div class="boss-actions">
+      <button class="boss-btn attack" onclick="submitBoss()">⚔ DELIVER FINAL BLOW</button>
+      <button class="boss-btn flee" onclick="closeModal()">🏃 FLEE (Later)</button>
+    </div>
+  </div>`;
+  overlay.classList.add('open');
+  activeModal='boss';
+}
+
+function answerBoss(qi,oi){
+  bossState.answers[qi]=oi;
+  document.querySelectorAll(`#bq-${qi} .bq-opt`).forEach((b,i)=>{
+    b.style.borderColor=i===oi?'var(--gold)':'var(--border)';
+    b.style.background=i===oi?'rgba(255,215,0,0.1)':'';
+  });
+  const answered=Object.keys(bossState.answers).length;
+  const hp=Math.round((1-answered/bossState.totalQ)*100);
+  document.getElementById('boss-hp-fill').style.width=hp+'%';
+  document.getElementById('boss-hp-label').textContent=`BOSS HP: ${hp}%`;
+}
+
+function submitBoss(){
+  let score=0;
+  bossState.q.questions.forEach((bq,qi)=>{
+    const userAns=bossState.answers[qi];
+    const correct=bq.ans;
+    document.querySelectorAll(`#bqo-${qi}-${correct}`).forEach(b=>b.classList.add('correct'));
+    if(userAns!==undefined&&userAns!==correct) document.getElementById(`bqo-${qi}-${userAns}`).classList.add('wrong');
+    document.querySelectorAll(`#bq-${qi} .bq-opt`).forEach(b=>b.disabled=true);
+    if(userAns===correct)score++;
+  });
+  const pass=score>=Math.ceil(bossState.totalQ*0.6);
+  const resultEl=document.getElementById('boss-result');
+  resultEl.style.display='block';
+  if(pass){
+    const prog=getProgress(currentUser.id);
+    const oldLevel=getLevel(prog.xp);
+    prog.xp+=bossState.q.xp;
+    prog.completedQuests[bossState.key]=Date.now();
+    prog.totalBosses++;
+    const newLevel=getLevel(prog.xp);
+    checkAchievements(prog);
+    saveProgress(currentUser.id,prog);
+    resultEl.innerHTML=`<div class="result-emoji">🏆</div><div class="result-title" style="color:var(--gold)">BOSS DEFEATED!</div><div class="result-sub">${score}/${bossState.totalQ} correct — +${bossState.q.xp} XP earned!<br>You are truly a legend!</div><br><button class="boss-btn attack" onclick="closeModal();renderAll()">⚔ CONTINUE ADVENTURE</button>`;
+    addNotif(`💀 BOSS SLAIN!`,`${bossState.q.title.replace('⚠ BOSS: ','')} has fallen before you! +${bossState.q.xp} XP!`);
+    if(newLevel>oldLevel) showToast('⬆️','LEVEL UP!',`You're now Level ${newLevel}! LEGENDARY!`);
+    else showToast('🏆','BOSS DEFEATED!',`+${bossState.q.xp} XP! The dungeon trembles!`);
+  } else {
+    resultEl.innerHTML=`<div class="result-emoji">💀</div><div class="result-title" style="color:var(--red)">DEFEATED...</div><div class="result-sub">${score}/${bossState.totalQ} correct. You need 60% to pass.<br>Review your notes and try again!</div><br><button class="boss-btn flee" onclick="closeModal()">📚 Study & Retry</button>`;
+    showToast('💀','Boss Wins...','You need 60% to pass. Review the material and try again!');
+  }
+  document.querySelector('.boss-btn.attack').style.display='none';
+}
+
+function closeModal(){
+  const overlay=document.getElementById('modal-overlay');
+  overlay.classList.remove('open');
+  overlay.innerHTML='';
+  activeModal=null;
+}
+
+function renderProgress(){
+  const prog=getProgress(currentUser.id);
+  const po=document.getElementById('progress-overview');
+  po.innerHTML=COURSES.map(c=>{
+    const qs=c.quests.filter(q=>!q.isBoss);
+    const done=qs.filter((q,i)=>prog.completedQuests[c.id+'_'+i]).length;
+    const pctC=qs.length?Math.round(done/qs.length*100):0;
+    const colors=['#00f5ff','#ffd700','#ff4757','#00ff88','#9b59ff'];
+    const col=colors[COURSES.indexOf(c)];
+    return `<div class="prog-card">
+      <div class="prog-card-header">
+        <div class="prog-icon">${c.icon}</div>
+        <div><div class="prog-title">${c.name}</div><div class="prog-code">${c.code}</div></div>
+      </div>
+      <div class="prog-bar-outer"><div class="prog-bar-inner" style="width:${pctC}%;background:linear-gradient(90deg,${col},${col}88)"></div></div>
+      <div class="prog-stats"><span class="prog-pct" style="color:${col}">${pctC}%</span><span class="prog-quests">${done}/${qs.length} quests</span></div>
+    </div>`;
+  }).join('');
+
+  const ub=document.getElementById('upcoming-bosses');
+  ub.innerHTML=COURSES.map(c=>{
+    const qs=c.quests.filter(q=>!q.isBoss);
+    const allDone=qs.every((q,i)=>prog.completedQuests[c.id+'_'+i]);
+    const bossIdx=c.quests.findIndex(q=>q.isBoss);
+    const bossDone=prog.completedQuests[c.id+'_'+bossIdx];
+    const boss=c.quests.find(q=>q.isBoss);
+    if(bossDone) return `<div class="lb-row"><div class="lb-rank" style="color:var(--green)">✅</div><div class="lb-avatar">${boss.bossEmoji}</div><div class="lb-info"><div class="lb-name" style="color:var(--green)">${boss.title.replace('⚠ BOSS: ','')}</div><div class="lb-level">${c.name} — DEFEATED</div></div><div class="lb-xp">+${boss.xp} XP CLAIMED</div></div>`;
+    if(allDone) return `<div class="lb-row" style="border-color:var(--red);cursor:pointer" onclick="showPage('quests');selectQuestCourse('${c.id}')"><div class="lb-rank" style="color:var(--red)">⚠</div><div class="lb-avatar">${boss.bossEmoji}</div><div class="lb-info"><div class="lb-name" style="color:var(--red)">${boss.title.replace('⚠ BOSS: ','')}</div><div class="lb-level">${c.name} — READY TO FIGHT</div></div><div class="lb-xp" style="color:var(--red)">+${boss.xp} XP</div></div>`;
+    const remaining=qs.filter((q,i)=>!prog.completedQuests[c.id+'_'+i]).length;
+    return `<div class="lb-row"><div class="lb-rank" style="color:var(--muted)">🔒</div><div class="lb-avatar" style="opacity:0.4">${boss.bossEmoji}</div><div class="lb-info"><div class="lb-name">${boss.title.replace('⚠ BOSS: ','')}</div><div class="lb-level">${c.name} — ${remaining} quests remaining to unlock</div></div><div class="lb-xp" style="color:var(--muted)">+${boss.xp} XP</div></div>`;
+  }).join('');
+}
+
+function checkAchievements(prog){
+  const lv=getLevel(prog.xp);
+  prog.level=lv;
+  ACHIEVEMENTS_DEF.forEach(a=>{
+    if(!prog.achievements.includes(a.id)&&a.check(prog)){
+      prog.achievements.push(a.id);
+      setTimeout(()=>showToast(a.icon,a.name,a.desc),800);
+      addNotif(`${a.icon} Trophy Unlocked: ${a.name}`,a.desc);
+    }
+  });
+}
+
+function renderAchievements(){
+  const prog=getProgress(currentUser.id);
+  const ag=document.getElementById('achievements-grid');
+  ag.innerHTML=ACHIEVEMENTS_DEF.map(a=>{
+    const unlocked=prog.achievements.includes(a.id);
+    return `<div class="achieve${unlocked?' unlocked':''}">
+      <div class="achieve-icon">${a.icon}</div>
+      <div class="achieve-name">${a.name}</div>
+      <div class="achieve-desc">${a.desc}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderLeaderboard(){
+  const users=getUsers();
+  const list=Object.values(users).map(u=>{
+    const p=getProgress(u.id);
+    return {name:u.name,emoji:u.emoji,heroClass:u.heroClass,xp:p.xp,level:getLevel(p.xp)};
+  }).sort((a,b)=>b.xp-a.xp);
+  const lb=document.getElementById('leaderboard-list');
+  const medals=['🥇','🥈','🥉'];
+  lb.innerHTML=list.map((u,i)=>{
+    const isMe=u.name===currentUser.name;
+    return `<div class="lb-row${isMe?' me':''}">
+      <div class="lb-rank">${medals[i]||`#${i+1}`}</div>
+      <div class="lb-avatar">${u.emoji}</div>
+      <div class="lb-info"><div class="lb-name">${u.name}${isMe?' (You)':''}</div><div class="lb-level">LV.${u.level} ${u.heroClass}</div></div>
+      <div class="lb-xp">${u.xp} XP</div>
+    </div>`;
+  }).join('')||(list.length===0?'<p style="color:var(--muted);text-align:center;padding:40px">No students yet. Be the first hero!</p>':'');
+}
+
+function renderDownloads(){
+  const pptData=[
+    {name:'C++ Programming Fundamentals',code:'DIT 211',weeks:'Weeks 1-6',icon:'💻',topics:'Syntax, Control Structures, Functions, Arrays, Pointers'},
+    {name:'OOP — Classes & Inheritance',code:'DIT 211',weeks:'Weeks 7-12',icon:'🏗️',topics:'Classes, Inheritance, Polymorphism, Templates, File I/O'},
+    {name:'Database Design & Normalization',code:'DIT 124',weeks:'Weeks 1-7',icon:'🗄️',topics:'ERD, Relational Model, Normal Forms, Database Lifecycle'},
+    {name:'SQL — DDL, DML & DCL',code:'DIT 124',weeks:'Weeks 8-12',icon:'📋',topics:'CREATE, SELECT, INSERT, UPDATE, DELETE, GRANT, REVOKE'},
+    {name:'Cybersecurity Essentials Part 1',code:'DCF 121',weeks:'Weeks 1-6',icon:'🛡️',topics:'CIA Triad, Threats, Cryptography, Risk Management'},
+    {name:'Cybersecurity Essentials Part 2',code:'DCF 121',weeks:'Weeks 7-12',icon:'🔒',topics:'High Availability, Defense-in-Depth, Hardening, Careers'},
+    {name:'Operating Systems Core Concepts',code:'DIT 122',weeks:'Weeks 1-6',icon:'⚙️',topics:'OS Types, Process Management, Memory, Virtual Memory'},
+    {name:'OS Advanced — I/O & Security',code:'DIT 122',weeks:'Weeks 7-12',icon:'🖥️',topics:'I/O Management, Deadlocks, Security, Distributed Systems'},
+    {name:'Computer Networks — Foundations',code:'DIT 123',weeks:'Weeks 1-6',icon:'🌐',topics:'OSI Model, Physical Layer, Data Link, Ethernet, Switching'},
+    {name:'Networks — Routing & Security',code:'DIT 123',weeks:'Weeks 7-12',icon:'🔀',topics:'IP Addressing, Routing, IPv6, Transport Layer, Firewalls'},
+  ];
+  const pg=document.getElementById('ppt-grid');
+  pg.innerHTML=pptData.map((p,i)=>`<div class="ppt-card">
+    <div class="ppt-icon">${p.icon}</div>
+    <div class="ppt-name">${p.name}</div>
+    <div class="ppt-weeks">${p.code} · ${p.weeks}</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px">${p.topics}</div>
+    <button class="ppt-btn" onclick="downloadPPT(${i})">📥 DOWNLOAD SLIDES</button>
+  </div>`).join('');
+}
+
+function downloadPPT(idx){
+  // Generate a minimal PPT-like HTML that auto-downloads
+  const pptData=[
+    {name:'C++ Programming Fundamentals',slides:['C++ Basics: #include, main(), data types, cin/cout','Control Flow: if/else, switch, for, while, do-while loops','Functions: parameters, return values, overloading','Arrays: 1D, 2D, searching, std::string operations','Pointers: &, *, new, delete, nullptr — memory management','Structures: struct, enum, dot & arrow operators']},
+    {name:'OOP — Classes & Inheritance',slides:['Classes: private/public/protected, constructors, destructors','Encapsulation: getters, setters, data hiding','Inheritance: class Dog : public Animal — code reuse','Polymorphism: virtual, override, runtime dispatch','Abstract Classes: pure virtual = 0, cannot instantiate','Templates: template<typename T>, generic programming','File I/O: ofstream, ifstream, getline, close()']},
+    {name:'Database Design',slides:['Database vs File System: advantages of DBMS','ERD: entities, attributes, relationships, cardinality','Normalization 1NF: atomic values, no repeating groups','Normalization 2NF: remove partial dependencies','Normalization 3NF: remove transitive dependencies','Database Lifecycle: plan → design → implement → maintain']},
+    {name:'SQL Language',slides:['DDL: CREATE TABLE, ALTER TABLE, DROP TABLE','DML: SELECT, INSERT INTO, UPDATE, DELETE','Filtering: WHERE, ORDER BY, GROUP BY, HAVING','JOINs: INNER, LEFT, RIGHT, FULL OUTER JOIN','DCL: GRANT privileges TO user, REVOKE FROM user','Security: SQL injection, access control, backups']},
+    {name:'Cybersecurity Part 1',slides:['CIA Triad: Confidentiality, Integrity, Availability','Threat Landscape: hackers, malware, phishing, DDoS','Risk Management: identify → assess → mitigate → review','Cryptography: symmetric (AES) vs asymmetric (RSA)','Access Control: DAC, MAC, RBAC models','Cybersecurity Standards: NIST CSF, ISO 27001']},
+    {name:'Cybersecurity Part 2',slides:['Digital Signatures: PKI, certificates, hash functions','High Availability: redundancy, failover, 99.999% uptime','Disaster Recovery: RTO, RPO, backup strategies','Defense-in-Depth: multiple security layers','System Hardening: patches, firewalls, IDS/IPS','Cybersecurity Careers: SOC analyst, pen tester, CISO']},
+    {name:'Operating Systems Core',slides:['OS Types: Batch, Multitasking, Real-time, Distributed, Embedded','OS Structure: Monolithic, Layered, Microkernel, Modular','Processes: New → Ready → Running → Waiting → Terminated','CPU Scheduling: FCFS, SJF, Round Robin, Priority','Memory: paging, segmentation, page tables, TLBs','Virtual Memory: demand paging, page faults, FIFO/LRU']},
+    {name:'OS Advanced',slides:['File Systems: sequential, direct, indexed access','File Allocation: contiguous, linked, indexed methods','I/O Management: programmed I/O, interrupts, DMA','Disk Scheduling: FCFS, SSTF, SCAN, C-SCAN','Deadlock: mutual exclusion, hold&wait, circular wait','OS Security: CIA, ACLs, authentication, encryption, malware']},
+    {name:'Networks Foundations',slides:['Network Components: hosts, routers, switches, media','OSI 7 Layers: Physical, Data Link, Network, Transport, Session, Presentation, Application','TCP/IP Model: Network Access, Internet, Transport, Application','Physical Layer: copper, fiber, wireless, bandwidth','Data Link: MAC addresses, framing, CRC error detection','Ethernet & VLANs: switching, broadcast domains, STP']},
+    {name:'Networks Routing',slides:['IP Addressing: classes, subnetting, CIDR notation','Routing: static routes, routing tables, ip route command','ARP: maps IP to MAC, ARP request/reply/cache','IPv6: 128-bit, ::1, global unicast, link-local','TCP vs UDP: reliability, handshake, port numbers','Network Security: firewalls, encryption, basic design']},
+  ];
+  const d=pptData[idx];
+  const content=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${d.name}</title><style>body{font-family:Arial,sans-serif;background:#1a1a2e;color:#fff;margin:0;padding:20px;}h1{color:#ffd700;text-align:center;border-bottom:2px solid #ffd700;padding-bottom:10px;} .slide{background:#0d1530;border:1px solid rgba(0,245,255,0.2);border-radius:12px;padding:20px 28px;margin:16px 0;} .slide-num{color:#00f5ff;font-size:11px;letter-spacing:2px;margin-bottom:8px;} .slide-content{font-size:16px;line-height:1.6;} .footer{text-align:center;color:#555;font-size:12px;margin-top:30px;}</style></head><body><h1>📊 ${d.name}</h1><p style="text-align:center;color:#888">ZeTech University — Study Slide Deck</p>${d.slides.map((s,i)=>`<div class="slide"><div class="slide-num">SLIDE ${i+1}</div><div class="slide-content">${s}</div></div>`).join('')}<div class="footer">Generated by ZeTech Quest Dashboard</div></body></html>`;
+  const blob=new Blob([content],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=d.name.replace(/[^a-z0-9]/gi,'_')+'.html';
+  a.click();
+  showToast('📥','Download Started!',`${d.name} slides downloaded!`);
+}
+
+// NOTIFICATIONS
+function addNotif(title,body){
+  notifications.unshift({title,body,time:new Date().toLocaleTimeString()});
+  if(notifications.length>10)notifications=notifications.slice(0,10);
+  const badge=document.getElementById('notif-badge');
+  const count=parseInt(badge.textContent||'0')+1;
+  badge.textContent=count;
+  renderNotifs();
+}
+function renderNotifs(){
+  const nl=document.getElementById('notif-list');
+  nl.innerHTML=notifications.slice(0,5).map(n=>`<div class="notif-item"><strong>${n.title}</strong><br>${n.body}<div class="ntime">${n.time}</div></div>`).join('')||'<div style="color:var(--muted);font-size:12px">No alerts yet. Go complete a quest!</div>';
+}
+function toggleNotif(){
+  const p=document.getElementById('notif-panel');
+  p.classList.toggle('open');
+  document.getElementById('notif-badge').textContent='0';
+}
+
+// TOAST
+function showToast(icon,title,body){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-icon').textContent=icon;
+  document.getElementById('toast-title').textContent=title;
+  document.getElementById('toast-body').textContent=body;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),4000);
+}
+
+// PAGE NAVIGATION
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(btn){
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  if(name==='quests')renderQuests();
+  if(name==='progress')renderProgress();
+  if(name==='achievements')renderAchievements();
+  if(name==='leaderboard')renderLeaderboard();
+  if(name==='downloads')renderDownloads();
+}
+
+// CLICK OUTSIDE MODAL/NOTIF
+document.addEventListener('click',e=>{
+  if(e.target===document.getElementById('modal-overlay'))closeModal();
+  if(!e.target.closest('#notif-panel')&&!e.target.closest('#notif-btn'))document.getElementById('notif-panel').classList.remove('open');
+});
+
+// INIT
+makeStars();
+</script>
+</body>
+</html>
